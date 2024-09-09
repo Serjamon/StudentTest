@@ -1,64 +1,53 @@
 package ru.courses.education;
 
+import lombok.*;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@ToString
+@EqualsAndHashCode
 public class Student {
+
+    @Getter    @Setter
     private String name;
-    private List<Integer> grades= new ArrayList<>();
+    private List grades = new ArrayList<>();
+    //вынес httpClient в переменные класса чтобы можно было его менять на заглушку
+    //публичный - чтобы не возиться потом с метаданными
+    public CloseableHttpClient httpClient;
 
     public Student(String name) {
         this.name = name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+        httpClient = HttpClients.createDefault();
     }
 
     public List getGrades() {
-        return new ArrayList<Integer>(grades.stream().toList());
+        return new ArrayList<>(grades);
     }
 
+    @SneakyThrows
     public void addGrade(int grade) {
-        if (grade < 2 || grade > 5) {
+        HttpGet request = new HttpGet("http://localhost:5352/checkGrade?grade="+grade);
+        CloseableHttpResponse httpResponse = httpClient.execute(request);
+        HttpEntity entity = httpResponse.getEntity();
+        if(!Boolean.parseBoolean(EntityUtils.toString(entity))){
             throw new IllegalArgumentException(grade + " is wrong grade");
         }
         grades.add(grade);
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.name);
-        hash = 13 * hash + Objects.hashCode(this.grades);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Student other = (Student) obj;
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        return Objects.equals(this.grades, other.grades);
-    }
-
-    @Override
-    public String toString() {
-        return "Student{" + "name=" + name + ", marks=" + grades + '}';
+    @SneakyThrows
+    public int raiting() {
+        HttpGet request = new HttpGet("http://localhost:5352/educ?sum="+grades.stream().mapToInt(x-> (int) x).sum());
+        CloseableHttpResponse httpResponse = httpClient.execute(request);
+        HttpEntity entity = httpResponse.getEntity();
+        return Integer.parseInt(EntityUtils.toString(entity));
     }
 }
