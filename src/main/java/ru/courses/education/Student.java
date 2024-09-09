@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Student {
     private String name;
-    private List grades= new ArrayList<>();
+    private List<Integer> grades= new ArrayList<>();
 
     public Student(String name) {
         this.name = name;
