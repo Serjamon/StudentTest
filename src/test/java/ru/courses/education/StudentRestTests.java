@@ -1,5 +1,6 @@
 package ru.courses.education;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -11,6 +12,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 
 public class StudentRestTests {
@@ -297,7 +299,7 @@ public class StudentRestTests {
         @SneakyThrows
         @Test
         // code 404
-        public void postStudent2() {
+        public void delStudent2() {
 
             RestAssured.given().baseUri("http://localhost:8080/student/" + idStud +"3")
                     .when()
@@ -319,27 +321,192 @@ public class StudentRestTests {
         }
         //TODO
         // get /topStudent код 200 и пустое тело, если студентов в базе нет.
-        // как это проверить? заглушками?
+        // если только для теста, нельзя же читсить БД рабочую? иначе заглушки, но не найдем ошибок в след.задании.
 
         @SneakyThrows
         @Test
-        //
+        //на начало тестов пусто
         public void topStudent1() {
 
+            RestAssured.given().baseUri("http://localhost:8080/topStudent")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .header("Content-Length", Matchers.equalTo("0"));
+
         }
 
         @SneakyThrows
         @Test
-        //
+        //код 200 и пустое тело, если ни у кого из студентов в базе нет оценок
         public void topStudent2() {
 
-            RestAssured.given().baseUri("http://localhost:8080/student/" + idStud +"3")
+            ObjectMapper objectMapper = new ObjectMapper();
+            Student stud = new Student(idStud, nameStud, new int[]{});
+            String json11 = objectMapper.writeValueAsString(stud);
+
+            RestAssured.given().baseUri("http://localhost:8080/student")
+                    .body(json11).contentType("application/json; utf-8")
                     .when()
-                    .delete()
+                    .post()
                     .then()
-                    .statusCode(404);
+                    .statusCode(201);
+
+            RestAssured.given().baseUri("http://localhost:8080/topStudent")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .header("Content-Length", Matchers.equalTo("0"));
+
+            URL obj = new URL("http://localhost:8080/student/" + idStud);
+            HttpURLConnection urlConnection = (HttpURLConnection) obj.openConnection();
+            urlConnection.setRequestMethod("DELETE");
+            urlConnection.getResponseCode();
 
         }
+
+        @SneakyThrows
+        @Test
+        //код 200 и один студент, если у него максимальная средняя оценка,
+        //либо же среди всех студентов с максимальной средней у него их больше всего
+        public void topStudent3() {
+
+            addTopStudents();
+
+            String res = RestAssured.given().baseUri("http://localhost:8080/topStudent")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .extract().asString();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Student> students = objectMapper.readValue(res, new TypeReference<List<Student>>(){});
+
+            Assertions.assertEquals(1, students.size());
+            Assertions.assertEquals(7771, students.get(0).getId());
+
+            delTopStudents();
+
+        }
+
+        @SneakyThrows
+        @Test
+        //код 200 и несколько студентов, если у них всех эта оценка максимальная и при этом они равны по количеству оценок
+        public void topStudent4() {
+
+            addTopStudents();
+
+            URL obj = new URL("http://localhost:8080/student/");
+            ObjectMapper objectMapper = new ObjectMapper();
+            Student stud1 = new Student(7777, "topStudent1", new int[]{5, 5, 5, 5});
+            String json1 = objectMapper.writeValueAsString(stud1);
+
+            HttpURLConnection urlConnection = (HttpURLConnection) obj.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
+            urlConnection.setRequestProperty("Accept", "application/json");
+            urlConnection.setDoOutput(true);
+            try (OutputStream os = urlConnection.getOutputStream()) {
+                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+            urlConnection.getResponseCode();
+
+            String res = RestAssured.given().baseUri("http://localhost:8080/topStudent")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .extract().asString();
+
+            List<Student> students = objectMapper.readValue(res, new TypeReference<List<Student>>(){});
+
+            Assertions.assertEquals(2, students.size());
+            Assertions.assertEquals(7771, students.get(0).getId());
+            Assertions.assertEquals(7777, students.get(1).getId());
+
+            delTopStudents();
+            URL obj1 = new URL("http://localhost:8080/student/7777");
+            HttpURLConnection urlConnectionDel = (HttpURLConnection) obj1.openConnection();
+            urlConnectionDel.setRequestMethod("DELETE");
+            urlConnectionDel.getResponseCode();
+
+        }
+
+        @SneakyThrows
+        private void addTopStudents(){
+
+            URL obj = new URL("http://localhost:8080/student/");
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            Student stud1 = new Student(7771, "topStudent1", new int[]{5, 5, 5, 5});
+            String json1 = objectMapper.writeValueAsString(stud1);
+
+            HttpURLConnection urlConnection = (HttpURLConnection) obj.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
+            urlConnection.setRequestProperty("Accept", "application/json");
+            urlConnection.setDoOutput(true);
+            try (OutputStream os = urlConnection.getOutputStream()) {
+                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+            urlConnection.getResponseCode();
+
+
+            Student stud2 = new Student(7772, "topStudent2", new int[]{5, 5, 5});
+            String json2 = objectMapper.writeValueAsString(stud2);
+            HttpURLConnection urlConnection2 = (HttpURLConnection) obj.openConnection();
+            urlConnection2.setRequestMethod("POST");
+            urlConnection2.setRequestProperty("Content-Type", "application/json; utf-8");
+            urlConnection2.setRequestProperty("Accept", "application/json");
+            urlConnection2.setDoOutput(true);
+            try (OutputStream os = urlConnection2.getOutputStream()) {
+                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+            urlConnection2.getResponseCode();
+
+            Student stud3 = new Student(7773, "topStudent3", new int[]{5, 5, 5, 4});
+            String json3 = objectMapper.writeValueAsString(stud3);
+            HttpURLConnection urlConnection3 = (HttpURLConnection) obj.openConnection();
+            urlConnection3.setRequestMethod("POST");
+            urlConnection3.setRequestProperty("Content-Type", "application/json; utf-8");
+            urlConnection3.setRequestProperty("Accept", "application/json");
+            urlConnection3.setDoOutput(true);
+            try (OutputStream os = urlConnection3.getOutputStream()) {
+                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+            urlConnection3.getResponseCode();
+
+        }
+
+        @SneakyThrows
+        private void delTopStudents(){
+
+            URL obj1 = new URL("http://localhost:8080/student/7771");
+            HttpURLConnection urlConnection = (HttpURLConnection) obj1.openConnection();
+            urlConnection.setRequestMethod("DELETE");
+            urlConnection.getResponseCode();
+
+            URL obj2 = new URL("http://localhost:8080/student/7772");
+            urlConnection = (HttpURLConnection) obj2.openConnection();
+            urlConnection.setRequestMethod("DELETE");
+            urlConnection.getResponseCode();
+
+            URL obj3 = new URL("http://localhost:8080/student/7773");
+            urlConnection = (HttpURLConnection) obj3.openConnection();
+            urlConnection.setRequestMethod("DELETE");
+            urlConnection.getResponseCode();
+
+        }
+
 
     }
 
