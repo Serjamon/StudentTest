@@ -101,6 +101,7 @@ public class StudentRestTests {
                     .when()
                     .get()
                     .then()
+                    .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("id", Matchers.equalTo(idStud))
                     .body("name", Matchers.equalTo(nameStud));
@@ -246,6 +247,15 @@ public class StudentRestTests {
                     .extract().as(Integer.class);
 
             Assertions.assertNotNull(newId);
+
+            RestAssured.given().baseUri("http://localhost:8080/student/" + newId)
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("id", Matchers.equalTo(newId))
+                    .body("name", Matchers.equalTo("anyname"));
 
             URL obj = new URL("http://localhost:8080/student/" + newId);
             HttpURLConnection urlConnection = (HttpURLConnection) obj.openConnection();
@@ -402,7 +412,7 @@ public class StudentRestTests {
 
             URL obj = new URL("http://localhost:8080/student/");
             ObjectMapper objectMapper = new ObjectMapper();
-            Student stud1 = new Student(7777, "topStudent1", new int[]{5, 5, 5, 5});
+            Student stud1 = new Student(7777, "topStudent7", new int[]{5, 5, 5, 5});
             String json1 = objectMapper.writeValueAsString(stud1);
 
             HttpURLConnection urlConnection = (HttpURLConnection) obj.openConnection();
@@ -428,7 +438,9 @@ public class StudentRestTests {
 
             Assertions.assertEquals(2, students.size());
             Assertions.assertEquals(7771, students.get(0).getId());
+            Assertions.assertEquals("topStudent1", students.get(0).getName());
             Assertions.assertEquals(7777, students.get(1).getId());
+            Assertions.assertEquals("topStudent7", students.get(1).getName());
 
             delTopStudents();
             URL obj1 = new URL("http://localhost:8080/student/7777");
