@@ -1,53 +1,60 @@
 package ru.courses.education;
 
 import lombok.*;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@ToString
 @EqualsAndHashCode
 public class Student {
 
-    @Getter    @Setter
+    private int id;
     private String name;
-    private List grades = new ArrayList<>();
-    //вынес httpClient в переменные класса чтобы можно было его менять на заглушку
-    //публичный - чтобы не возиться потом с метаданными
-    public CloseableHttpClient httpClient;
+    private int[] marks;
 
-    public Student(String name) {
+    public Student(){
+
+    }
+
+    public Student(int id, String name, int... marks) {
         this.name = name;
-        httpClient = HttpClients.createDefault();
+        this.id = id;
+        this.marks = marks;
     }
 
-    public List getGrades() {
-        return new ArrayList<>(grades);
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", marks=" + marks +
+                '}';
     }
 
-    @SneakyThrows
-    public void addGrade(int grade) {
-        HttpGet request = new HttpGet("http://localhost:5352/checkGrade?grade="+grade);
-        CloseableHttpResponse httpResponse = httpClient.execute(request);
-        HttpEntity entity = httpResponse.getEntity();
-        if(!Boolean.parseBoolean(EntityUtils.toString(entity))){
-            throw new IllegalArgumentException(grade + " is wrong grade");
-        }
-        grades.add(grade);
+    public int getId() {
+        return id;
     }
 
-    @SneakyThrows
-    public int raiting() {
-        HttpGet request = new HttpGet("http://localhost:5352/educ?sum="+grades.stream().mapToInt(x-> (int) x).sum());
-        CloseableHttpResponse httpResponse = httpClient.execute(request);
-        HttpEntity entity = httpResponse.getEntity();
-        return Integer.parseInt(EntityUtils.toString(entity));
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int[] getMarks() {
+        return marks;
+    }
+
+    public void setMarks(int[] marks) {
+        this.marks = marks;
     }
 }

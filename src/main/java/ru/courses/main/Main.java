@@ -9,9 +9,9 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
 
-        Student stud = new Student("Dimon");
+//        Student stud = new Student("Dimon");
 
-        List<Integer> grades = Arrays.asList(new Integer[]{2, 3, 5, 4, 3});
+//        List<Integer> grades = Arrays.asList(new Integer[]{2, 3, 5, 4, 3});
 
 
     }
