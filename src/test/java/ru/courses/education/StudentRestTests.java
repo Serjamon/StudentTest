@@ -479,7 +479,7 @@ public class StudentRestTests {
             urlConnection2.setRequestProperty("Accept", "application/json");
             urlConnection2.setDoOutput(true);
             try (OutputStream os = urlConnection2.getOutputStream()) {
-                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                byte[] input = json2.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
             urlConnection2.getResponseCode();
@@ -492,7 +492,7 @@ public class StudentRestTests {
             urlConnection3.setRequestProperty("Accept", "application/json");
             urlConnection3.setDoOutput(true);
             try (OutputStream os = urlConnection3.getOutputStream()) {
-                byte[] input = json1.getBytes(StandardCharsets.UTF_8);
+                byte[] input = json3.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
             urlConnection3.getResponseCode();
