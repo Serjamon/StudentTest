@@ -20,10 +20,13 @@ public class DBEmployee {
         annId = findEmployeeByName("Ann");
 
         if (annId != -1) {
+            System.out.println("Анна перемещена в отдел HR");
             setDeptHR(annId);
         }
 
         System.out.println("Исправлено имен струдников: " + correctEmployeeNames());
+
+        System.out.println("Кол-во сотрудников в отделе ИТ: " + emplInIT());
 
     }
 
@@ -87,11 +90,21 @@ public class DBEmployee {
         preparedStatement.executeUpdate();
     }
 
+    @SneakyThrows
+    private static int emplInIT() {
+        String q = "SELECT COUNT(*) FROM Employee WHERE DepartmentID = (SELECT ID FROM Department WHERE Name = 'IT')";
+        PreparedStatement preparedStatement = con.prepareStatement(q);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next()) {
+            return resultSet.getInt(1);
+        }
+        return 0;
+    }
 
 
     @SneakyThrows
     public static void setConnection(){
-        con = DriverManager.getConnection("jdbc:h2:~\\Office");
+        con = DriverManager.getConnection("jdbc:h2:C:\\Work\\Office\\Office");
         if (con!=null) {
             System.out.println("setConnection = OK");
         } else {
