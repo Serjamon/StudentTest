@@ -16,7 +16,6 @@ public class DBEmployee {
         int annId = 0;
         setConnection();
 
-
         annId = findEmployeeByName("Ann");
 
         if (annId != -1) {
